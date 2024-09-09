@@ -1,4 +1,6 @@
+import copy
 from abc import ABC, abstractmethod
+from collections import deque
 
 
 class Entity(ABC):
@@ -47,6 +49,7 @@ class Grass(Entity):
     def __init__(self, row, colm):
         super().__init__(row, colm)
         self.name = 'Трава'
+        self.hit_points = 20
 
     def __repr__(self):
         return self.name
@@ -58,7 +61,7 @@ class Creature(Entity):
     def __init__(self, row, colm):
         super().__init__(row, colm)
         self.step = 1
-        self.hit_points = 10
+        self.hit_points = 20
         self.name = 'Существо'
 
     @abstractmethod
@@ -74,9 +77,61 @@ class Herbivore(Creature):
     def __init__(self, row, colm):
         super().__init__(row, colm)
         self.name = 'Травоядное'
+        self.power_attack = 5
+        self.hit_points = 20
 
-    def make_move(self):
-        pass
+    def accepting_attack(self, attack: int):
+        """Получение урона"""
+        self.hit_points -= attack
+        self.existence_in_field()
+
+    def existence_in_field(self, map):
+        """Проверка жизней"""
+        if self.hit_points <= 0:
+            map.del_obj(self.coordinate[0], self.coordinate[0])
+
+    def make_move(self, map):
+        """Алгоритм поиска цели"""
+        target_stop = 'Трава'
+        # Размеры матрицы
+        rows, cols = map.rows, map.cols
+        # Возможные направления движения (вверх, вниз, влево, вправо)
+        step = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        # Очередь для BFS, в ней хранятся кортежи: текущая позиция и путь до неё
+        queue = deque([(self.coordinate, [self.coordinate])])
+        # Множество для хранения посещённых клеток
+        visited = set()
+        visited.add(self.coordinate)
+
+        # поле
+        map = map.get_map()
+        while queue:
+            (x, y), path = queue.popleft()
+            # Если достигли целевой точки, возвращаем путь
+            if str(map[(x, y)]) == target_stop:
+                # print(path[1])
+                return path
+            # Проходим по всем возможным направлениям
+            for dx, dy in step:
+                nx, ny = x + dx, y + dy
+                # Проверяем, находится ли новая позиция в пределах массива и проходима ли она
+                if 0 <= nx <= rows and 0 <= ny <= cols and (map[(nx, ny)] == 0 or str(map[(nx, ny)]) == target_stop):
+                    new_position = (nx, ny)
+                    if new_position not in visited:
+                        visited.add(new_position)
+                        queue.append((new_position, path + [new_position]))
+
+    def step_in_map(self, map):
+        """Сделать ход"""
+        path = self.make_move(map)
+        if map.is_free(path[1][0], path[1][1]):
+            print(path[1], 'Травоядное: свободно, шаг')
+            map.add_obj(Herbivore(path[1][0], path[1][1]), path[1][0], path[1][1])
+        else:
+            print(path[0], 'Травоядное: кушать')
+            if repr(map.get_obj(path[1][0], path[1][1])) == 'Трава':
+                print('рализация еды')
+            map.add_obj(Herbivore(path[0][0], path[0][1]), path[0][0], path[0][1])
 
     def __repr__(self):
         return 'Травоядное'
@@ -87,11 +142,55 @@ class Predator(Creature):
 
     def __init__(self, row, colm):
         super().__init__(row, colm)
-        self.power_attack = 10
+        self.power_attack = 5
+        self.hit_points = 20
         self.name = 'Хищник'
 
-    def make_move(self):
-        pass
+    def attack(self, obj):
+        obj.accepting_attack(self.power_attack)
+
+    def make_move(self, map):
+        target_stop = 'Травоядное'
+        # Размеры матрицы
+        rows, cols = map.rows, map.cols
+        # Возможные направления движения (вверх, вниз, влево, вправо)
+        step = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        # Очередь для BFS, в ней хранятся кортежи: текущая позиция и путь до неё
+        queue = deque([(self.coordinate, [self.coordinate])])
+        # Множество для хранения посещённых клеток
+        visited = set()
+        visited.add(self.coordinate)
+
+        # поле
+        map = map.get_map()
+        while queue:
+            (x, y), path = queue.popleft()
+            # Если достигли целевой точки, возвращаем путь
+            if str(map[(x, y)]) == target_stop:
+                # print(path[1])
+                return path
+            # Проходим по всем возможным направлениям
+            for dx, dy in step:
+                nx, ny = x + dx, y + dy
+                # Проверяем, находится ли новая позиция в пределах массива и проходима ли она
+                if 0 <= nx <= rows and 0 <= ny <= cols and (map[(nx, ny)] == 0 or str(map[(nx, ny)]) == target_stop):
+                    new_position = (nx, ny)
+                    if new_position not in visited:
+                        visited.add(new_position)
+                        queue.append((new_position, path + [new_position]))
+
+        # Если путь не найден, возвращаем пустой список
+    def step_in_map(self, map):
+        path = self.make_move(map)
+        if map.is_free(path[1][0], path[1][1]):
+            print(path[1], 'Хищник: свободно, шаг')
+            map.add_obj(Predator(path[1][0], path[1][1]), path[1][0], path[1][1])
+        else:
+            print(path[0], 'Хищник: атака')
+            print('на пути объект', repr(map.get_obj(path[1][0], path[1][1])))
+            if repr(map.get_obj(path[1][0], path[1][1])) == 'Травоядное':
+                print('рализация атаки')
+            map.add_obj(Predator(path[0][0], path[0][1]), path[0][0], path[0][1])
 
     def __repr__(self):
         return 'Хищник'

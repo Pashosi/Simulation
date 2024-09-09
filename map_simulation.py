@@ -1,13 +1,13 @@
 import copy
 from random import randint
 
-from main import Predator
+from creatures import Predator
 
 
 class Map:
     """Поле"""
 
-    def __init__(self, rows=4, cols=4):
+    def __init__(self, rows, cols):
         self.rows = rows
         self.cols = cols
         self.field = self.game_field(self.rows, self.cols)
@@ -26,19 +26,45 @@ class Map:
         self.coordinates_objects[(rows, cols)] = obj
         self.field[rows, cols] = obj
 
+    def del_obj(self, rows, cols):
+        """Удаление объекта из словаря поля и списка объектов"""
+        self.field[(rows, cols)] = 0
+        del self.coordinates_objects[(rows, cols)]
+
+    def get_map(self):
+        """Возврат экземпляра поля"""
+        return self.field
+
     def is_free(self, row, col):
         """Проверка поля на наличие свободного места"""
         if 0 <= row <= self.rows and 0 <= col <= self.cols and (row, col) not in self.coordinates_objects:
             return True
         else:
+            print('нельзя наступать')
             return False
 
-    def get_empty_coordin(self):
+    def get_obj(self, row, col):
+        """Получение объекта по заданным координатам из словаря объектов"""
+        if (row, col) in self.coordinates_objects:
+            return self.coordinates_objects[(row, col)]
+        else:
+            raise ValueError('Такого объекта в списке существующих объектов нет')
+
+    def get_empty_coordinate(self):
         """Получение рандомной, свободной координаты на поле"""
         while True:
             coord_row, coord_colm = randint(0, self.rows), randint(0, self.cols)
-            if self.field[(coord_colm, coord_row)] == 0:
+            if self.field[(coord_row, coord_colm)] == 0:
                 return coord_row, coord_colm
+
+    def chang_obj_field(self, obj_name: str):
+        """Изменение положения объекта на поле через предоставленный интерфейс"""
+        for coord, name_obj in self.coordinates_objects.items():
+            if repr(name_obj) == obj_name:
+                old_row, old_col = name_obj.coordinate[0], name_obj.coordinate[1]
+                self.del_obj(old_row, old_col)
+                name_obj.step_in_map(self)
+                break
 
     def changing_obj_field(self):
         """Изменение положения объекта на поле"""
