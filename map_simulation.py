@@ -1,7 +1,7 @@
 import copy
 from random import randint
 
-from creatures import Predator
+from creatures import Predator, Herbivore
 
 
 class Map:
@@ -40,7 +40,7 @@ class Map:
         if 0 <= row <= self.rows and 0 <= col <= self.cols and (row, col) not in self.coordinates_objects:
             return True
         else:
-            print('нельзя наступать')
+            # print('нельзя наступать')
             return False
 
     def get_obj(self, row, col):
@@ -56,6 +56,14 @@ class Map:
             coord_row, coord_colm = randint(0, self.rows), randint(0, self.cols)
             if self.field[(coord_row, coord_colm)] == 0:
                 return coord_row, coord_colm
+
+    def check_lives(self):
+        """Проверка живы ли объекты в словаре объектов"""
+        for coord, obj in copy.copy(self.coordinates_objects).items():
+            if hasattr(obj, 'hit_points') and obj.hit_points <= 0:
+                self.del_obj(coord[0], coord[1])
+                coord_row, coord_colm = self.get_empty_coordinate()
+                self.add_obj(obj.__class__(coord_row, coord_colm), coord_row, coord_colm)
 
     def chang_obj_field(self, obj_name: str):
         """Изменение положения объекта на поле через предоставленный интерфейс"""

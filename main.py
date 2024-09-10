@@ -26,9 +26,12 @@ class Simulation:
     def start_simulation(self):
         """Запуск бесконечного цикла симуляции и рендеринга"""
         while True:
+            self.map.check_lives()
             self.render_map()
             self.next_turn()
             time.sleep(3)
+            print()
+            print()
 
     def render_map(self):
         """Отрендерить карту"""
@@ -75,20 +78,6 @@ class Actions:
 
 
 if __name__ == '__main__':
-    simulation = Simulation(10, 10)
+    simulation = Simulation(5, 5)
     simulation.start_simulation()
-    # simulation.render_map()
-    # simulation.next_turn()
-    # print(simulation.get_progress_counter())
-    # print()
-    # simulation.render_map()
-    # simulation.next_turn()
-    # print()
-    # simulation.render_map()
-    # simulation.next_turn()
-    # print()
-    # simulation.render_map()
-    # simulation.next_turn()
-    # print()
-    # simulation.render_map()
-    # print(simulation.get_progress_counter())
+
