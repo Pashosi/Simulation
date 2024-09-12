@@ -88,15 +88,9 @@ class Herbivore(Creature):
         self.power_attack = 5
         self.hit_points = 20
 
-    # def existence_in_field(self, map):  # пока не реализовал
-    #     """Проверка жизней"""
-    #     if self.hit_points <= 0:
-    #         map.del_obj(self.coordinate[0], self.coordinate[0])
-
     def make_move(self, map):
         """Алгоритм поиска цели"""
         target_stop = 'Трава'
-        # Размеры матрицы
         rows, cols = map.rows, map.cols
         # Возможные направления движения (вверх, вниз, влево, вправо)
         step = [(1, 0), (0, -1), (-1, 0), (0, 1)]
@@ -106,7 +100,6 @@ class Herbivore(Creature):
         visited = set()
         visited.add(self.coordinate)
 
-        # поле
         map = map.get_map()
         while queue:
             (x, y), path = queue.popleft()
@@ -128,14 +121,11 @@ class Herbivore(Creature):
         """Сделать ход"""
         path = self.make_move(map)
         if map.is_free(path[1][0], path[1][1]):
-            # print(path[1], 'Травоядное: свободно, шаг')
             new_obj = Herbivore(path[1][0], path[1][1])
             new_obj.hit_points = self.hit_points
             map.add_obj(new_obj, path[1][0], path[1][1])
         else:
-            # print(path[0], 'Травоядное: кушать')
             if repr(map.get_obj(path[1][0], path[1][1])) == 'Трава':
-                # print('рализация еды')
                 new_obj = Herbivore(path[0][0], path[0][1])
                 new_obj.hit_points = self.hit_points
                 map.add_obj(new_obj, path[0][0], path[0][1])
@@ -161,7 +151,6 @@ class Predator(Creature):
 
     def make_move(self, map):
         target_stop = 'Травоядное'
-        # Размеры матрицы
         rows, cols = map.rows, map.cols
         # Возможные направления движения (вверх, вниз, влево, вправо)
         step = [(-1, 0), (0, 1), (1, 0), (0, -1)]
@@ -171,13 +160,11 @@ class Predator(Creature):
         visited = set()
         visited.add(self.coordinate)
 
-        # поле
         map = map.get_map()
         while queue:
             (x, y), path = queue.popleft()
             # Если достигли целевой точки, возвращаем путь
             if str(map[(x, y)]) == target_stop:
-                # print(path[1])
                 return path
             # Проходим по всем возможным направлениям
             for dx, dy in step:
@@ -189,17 +176,12 @@ class Predator(Creature):
                         visited.add(new_position)
                         queue.append((new_position, path + [new_position]))
 
-        # Если путь не найден, возвращаем пустой список
-
     def step_in_map(self, map):
         """Сделать ход"""
         path = self.make_move(map)
         if map.is_free(path[1][0], path[1][1]):
-            # print(path[1], 'Хищник: свободно, шаг')
             map.add_obj(Predator(path[1][0], path[1][1]), path[1][0], path[1][1])
         else:
-            # print(path[0], 'Хищник: атака')
-            # print('на пути объект', repr(map.get_obj(path[1][0], path[1][1])))
             stop_obj = map.get_obj(path[1][0], path[1][1])
             if repr(stop_obj) == 'Травоядное':
                 print('рализация атаки, травоядный', stop_obj.hit_points)

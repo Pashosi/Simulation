@@ -40,7 +40,6 @@ class Map:
         if 0 <= row <= self.rows and 0 <= col <= self.cols and (row, col) not in self.coordinates_objects:
             return True
         else:
-            # print('нельзя наступать')
             return False
 
     def get_obj(self, row, col):
